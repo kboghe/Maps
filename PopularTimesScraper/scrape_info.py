@@ -3,60 +3,67 @@
 ##############################################
 
 from bs4 import BeautifulSoup
+import pandas as pd
 import re
 from collections import OrderedDict
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from collections import defaultdict
+
+
 
 ##################################################
 ##########  GENERAL FUNCTION FOR USE #############
 ##################################################
 
 def scrape_generalinfo(driver,search_input):
-    dict_info = {}
-    order = ["search input","google maps name","id","category","address","score","reviews","expense","extrainfo","address",
-             "maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"]
-
-    dict_info.update({"search input": search_input})
-    dict_info.update({"google maps name": driver.find_elements_by_class_name("section-hero-header-title-title")[0].text})
-    dict_info.update({"id": driver.find_element_by_css_selector('span[class*="plus-code"]').find_element_by_xpath('../..').text})
+    search_input_list = search_input
+    google_maps_name = driver.find_elements_by_class_name("section-hero-header-title-title")[0].text
+    id_coordinates = driver.find_element_by_css_selector('span[class*="plus-code"]')
+    ActionChains(driver).move_to_element(id_coordinates).perform()
+    id_list = id_coordinates.find_element_by_xpath('../..').text
     try:
         image_adr = driver.find_element_by_css_selector('img[src*="place_gm_blue"]').find_element_by_xpath('../..')
-        dict_info.update({"address":(list(filter(None,(re.split('   ',BeautifulSoup(image_adr.get_attribute('innerHTML'), 'lxml').text))))[0]).strip()})
+        address = list(filter(None,(re.split('   ',BeautifulSoup(image_adr.get_attribute('innerHTML'), 'lxml').text))))[0].strip()
     except NoSuchElementException:
-        dict_info.update({"address": "no address available"})
+        address = "no address available"
     try:
-        reviews = driver.find_element_by_css_selector('button[jsaction="pane.rating.moreReviews"]').text
-        dict_info.update({"reviews":re.findall(r'\d+',reviews)[0]})
+        reviews_raw = driver.find_element_by_css_selector('button[jsaction="pane.rating.moreReviews"]').text
+        reviews = re.findall(r'\d+',reviews_raw)[0]
     except NoSuchElementException:
-        dict_info.update({"reviews": "no reviews available"})
+        reviews = "no reviews available"
     try:
-        dict_info.update({"score": driver.find_element_by_css_selector('span[class="section-star-display"]').text})
+        score = driver.find_element_by_css_selector('span[class="section-star-display"]').text
     except NoSuchElementException:
-        dict_info.update({"score": "no reviews available"})
+        score ="no reviews available"
     try:
-        dict_info.update({"expense":driver.find_element_by_css_selector('span[aria-label*="Prijs"]').text})
+        expense = driver.find_element_by_css_selector('span[aria-label*="Prijs"]').text
     except NoSuchElementException:
-        dict_info.update({"expense": "no expense available"})
+        expense = "no expense available"
     try:
-        dict_info.update({"category": driver.find_element_by_css_selector('button[jsaction="pane.rating.category"]').text})
+        category = driver.find_element_by_css_selector('button[jsaction="pane.rating.category"]').text
     except NoSuchElementException:
-        dict_info.update({"category": "no category available"})
+        category = "no category available"
     try:
-        dict_info.update({"extrainfo":driver.find_element_by_css_selector('div[class*="editorial-attributes-summary"]').text})
+        extrainfo = driver.find_element_by_css_selector('div[class*="editorial-attributes-summary"]').text
     except NoSuchElementException:
-        dict_info.update({"extrainfo": "no extra info available"})
+        extrainfo = "no extra info available"
 
+    dict_days = defaultdict(list)
     try:
         openinghours = driver.find_element_by_css_selector('div[class*="section-open-hours"]').get_attribute("aria-label")
+    except NoSuchElementException:
+        dict_days['maandag'] = dict_days['dinsdag'] = dict_days['woensdag'] = \
+            dict_days['donderdag'] = dict_days['vrijdag'] = dict_days['zaterdag'] = dict_days['zondag'] = ['no hours available']
+    else:
         openinghours = openinghours.split(",")
         for day in openinghours:
             day_split = day.split(" ",1)
-            dict_info.update({day_split[0]:day_split[1]})
-    except NoSuchElementException:
-        dict_info.update({"maandag": "no hours available","dinsdag":"no hours available","woensdag": "no hours available",
-                          "donderdag":"no hours available","vrijdag":"no hours available",
-                          "zaterdag":"no hours available","zondag":"no hours available"})
+            dayname = day_split[0]
+            dict_days[dayname] = day_split[1]
     finally:
-        ordered_general_info = OrderedDict((k, dict_info[k]) for k in order)
-
-    return ordered_general_info
+        dict_generalinfo = {'search input':search_input_list,'google maps name':google_maps_name,'id':id_list,'category':category,
+                         'address':address,'score':score,'reviews':reviews,'expense':expense,'extra info':extrainfo,'maandag':dict_days['maandag'],
+                            'dinsdag':dict_days['dinsdag'],'woensdag':dict_days['woensdag'],'donderdag':dict_days['donderdag'],'vrijdag':dict_days['vrijdag'],
+                            'zaterdag':dict_days['zaterdag'],'zondag':dict_days['zondag']}
+    return dict_generalinfo

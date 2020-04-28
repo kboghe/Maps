@@ -1,3 +1,6 @@
+### add simple first hit####
+
+#######################################################
 def ind_search(driver,search_input):
 
     global unique_hit, first_hit
@@ -62,10 +65,17 @@ def ind_search(driver,search_input):
     else:  # if you haven't found a place that matches your place categories...
         print("Station not found!")  # display a message that no station was found
         individual_location_page = 0
-        station_not_found = "station not found"  # and append this message to every list (we'll use these lists to create our general DataFrame later on)
-        station = search_input
-        name_google = hours_in_day = percentage_list = hour_list = day_list = station_not_found
-        location_notfound = {'search input': station, 'google maps name': name_google, 'hours in day': hours_in_day,'percentage busy': percentage_list, 'hour list': hour_list, 'day list': day_list}
-        return location_notfound
 
     return individual_location_page
+
+############################################################
+
+def no_place_found(search_input):
+    place_not_found = "place not found"  # and append this message to every list (we'll use these lists to create our general DataFrame later on)
+    name_google = hours_in_day = percentage_list = hour_list = day_list = id = place_not_found
+    dict_poptimes = {'search input': search_input, 'google maps name': name_google,'id':id, 'hours in day': hours_in_day,'percentage busy': percentage_list, 'hour list': hour_list, 'day list': day_list}
+    dict_generalinfo = {'search input': search_input, 'google maps name': place_not_found, 'id': place_not_found,'category': place_not_found,
+                        'address': place_not_found, 'score': place_not_found, 'reviews': place_not_found,'expense': place_not_found,
+                        'extra info': place_not_found, 'maandag': place_not_found,'dinsdag': place_not_found,'woensdag': place_not_found,
+                        'donderdag': place_not_found, 'vrijdag': place_not_found,'zaterdag': place_not_found, 'zondag': place_not_found}
+    return [dict_poptimes,dict_generalinfo]

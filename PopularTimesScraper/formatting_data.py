@@ -2,11 +2,11 @@ import pandas as pd
 
 ####################################################################################
 
-def appending_poptimes(populartimesgraph,general_popdatacol,general_popdata):
-    for d in (general_popdata, populartimesgraph):  # you can list as many input dicts as you want here
+def appending_data(data_specific, generaldata_col,general_data):
+    for d in (general_data, data_specific):  # you can list as many input dicts as you want here
         for key, value in d.items():
-            general_popdatacol[key].append(value)
-    return general_popdatacol
+            generaldata_col[key].append(value)
+    return generaldata_col
 
 ##################################################################################
 

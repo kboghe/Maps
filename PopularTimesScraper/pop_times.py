@@ -1,21 +1,25 @@
 from random import randint
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup
-import time
 import re
+import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
+
 
 def scrape_pop(driver,search_input):
 
     check_popular_times = driver.find_elements_by_class_name("section-popular-times-graph")  # look for the "popular times" element on the page
     popular_times_available = len(check_popular_times)  # check whether the place is popular enough to have "popular times" enabled.
-    percentage_list, hour_list, day_list, station, name_google, hours_in_day,id = ([] for i in range(6))
+    percentage_list, hour_list, day_list, station, name_google, hours_in_day,id = ([] for i in range(7))
 
-    ###########
-    ### id ####
-    ###########
+    ##################
+    ### id Google ####
+    ##################
 
-    id = driver.find_element_by_css_selector('span[class*="plus-code"]').find_element_by_xpath('../..').text
+    time.sleep(3)
+    id_element = driver.find_element_by_css_selector('span[class*="plus-code"]').find_element_by_xpath('../..').text
 
     ###############################
     # SCRAPING POPULAR TIMES GRAPH#
@@ -97,21 +101,11 @@ def scrape_pop(driver,search_input):
         ##################
         # scrape day names#
         ##################
-
-        day_of_week = driver.find_elements_by_class_name("goog-menu-button-caption")[0]  # look for the element containing the name of the CURRENT day
-        day_of_week = BeautifulSoup(day_of_week.get_attribute('innerHTML'),'lxml').text  # retrieve the text info from this element (i.e. the day name in text)
-        day_list.extend([day_of_week] * bars_length)  # add it as many times as there are bars in the graph
-
-        nextbutton = driver.find_element_by_css_selector('button[aria-label="Ga naar de volgende dag"]')  # find the button to scroll to the next day
-        ActionChains(driver).move_to_element(nextbutton).perform()  # scroll to that next button if necessary
-
-        while count_days < 6:  # now add the other six days of the week by scrolling through the popular times graph#
-            nextbutton.click()  # click on the next button#
-            time.sleep(3)
-            day_of_week = driver.find_elements_by_class_name("goog-menu-button-caption")[0]  # retrieve the next day name#
-            day_of_week = BeautifulSoup(day_of_week.get_attribute('innerHTML'),'lxml').text
-            day_list.extend([day_of_week] * bars_length)  # add it as many times as there are bars in the graph
-            count_days = count_days + 1  # add one to our day count
+        day_list_pick = ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag']
+        day_of_week = driver.find_elements_by_class_name("goog-menu-button-caption")[0].text  # look for the element containing the name of the CURRENT day
+        index_day = day_list_pick.index(day_of_week)
+        for item in (day_list_pick[index_day:] + day_list_pick[:index_day]):
+            day_list.extend([item] * bars_length)
 
         ##################
         # add search input#
@@ -127,6 +121,12 @@ def scrape_pop(driver,search_input):
 
         hours_in_day.extend([bars_length] * len(station))  # add the amount of hours in a day
 
+        ################
+        # add id Google#
+        ################
+
+        id.extend([id_element] * (bars_length * 7))
+
     ######################################
     # NO POPULAR TIMES AVAILABLE FOR PLACE#
     ######################################
@@ -137,6 +137,7 @@ def scrape_pop(driver,search_input):
         station.append(search_input)  # and append it to our dataset#
         title = driver.find_elements_by_class_name("section-hero-header-title-title")[0].text
         name_google = list([title])
+        id = list([id_element])
         hours_in_day = percentage_list = hour_list = day_list = nothing_available
 
     dict_poptimes = {'search input': station, 'google maps name': name_google,'id':id, 'hours in day': hours_in_day,'percentage busy': percentage_list, 'hour list': hour_list, 'day list': day_list}
