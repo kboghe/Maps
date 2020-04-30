@@ -25,7 +25,7 @@ from PopularTimesScraper.scrape_info import scrape_generalinfo
 ##############################################
 
 def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_datacol,general_data):
-    for i in range(1):
+    for i in range(20):
         global result
         time.sleep(1)
         print(i)
@@ -34,14 +34,19 @@ def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_da
         except:
             break
         ActionChains(driver).move_to_element(result).perform()  # scroll to element
-        result.click()
+        driver.execute_script("arguments[0].click();",result)
         try:
             driver.find_element_by_css_selector('div[class="section-hero-header-title-description"]')
         except NoSuchElementException:
-            driver.find_element_by_xpath("//span[contains(@class,'button-previous-icon')]").click()
-            time.sleep(4)
-            driver.find_element_by_xpath("//span[contains(@class,'button-next-icon')]").click()
-            time.sleep(4)
+            previous = driver.find_element_by_xpath("//span[contains(@class,'button-previous-icon')]")
+            driver.execute_script("arguments[0].click();", previous)
+            time.sleep(8)
+            next = driver.find_element_by_xpath("//span[contains(@class,'button-next-icon')]")
+            driver.execute_script("arguments[0].click();", next)
+            time.sleep(8)
+            result = driver.find_elements_by_css_selector('h3[class="section-result-title"]')[i]
+            ActionChains(driver).move_to_element(result).perform()  
+            driver.execute_script("arguments[0].click();",result)
         populartimesgraph = scrape_pop(driver,search_input)
         appendedpoptimes = appending_data(populartimesgraph, general_popdatacol,general_popdata)
         generalinfo = scrape_generalinfo(driver,search_input)

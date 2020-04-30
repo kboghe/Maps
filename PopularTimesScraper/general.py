@@ -26,6 +26,7 @@ general_scraping = "true"
 ####  load search input ###
 ###########################
 inputfile_search = pd.read_csv('inputfile_search.csv', sep = ";", encoding = 'utf-8')
+inputfile_search = inputfile_search.iloc[2:]
 
 ######################
 ####  start browser###
