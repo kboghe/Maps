@@ -4,6 +4,7 @@
 from selenium import webdriver
 import pandas as pd
 import time
+from selenium.common.exceptions import NoSuchElementException
 
 ##############################################
 ##########  IMPORT OWN FUNCTIONS LIBRARIES ###
@@ -11,7 +12,7 @@ import time
 from PopularTimesScraper.indirect_search import ind_search, no_place_found
 from PopularTimesScraper.general_search import general_search
 from PopularTimesScraper.specific_place import scrape_specific_page
-from PopularTimesScraper.search_maps import start_session, search_maps
+from PopularTimesScraper.search_maps import start_session, search_maps, nearby_or_freewheeling
 
 ###########################
 ####  define parameters ###
@@ -25,8 +26,8 @@ general_scraping = "true"
 ###########################
 ####  load search input ###
 ###########################
-inputfile_search = pd.read_csv('inputfile_search.csv', sep = ";", encoding = 'utf-8')
-inputfile_search = inputfile_search.iloc[2:]
+inputfile_search = pd.read_csv('inputfile_search.csv', sep=";", encoding='utf-8')
+inputfile_search = inputfile_search.iloc[5:]
 
 ######################
 ####  start browser###
@@ -34,28 +35,27 @@ inputfile_search = inputfile_search.iloc[2:]
 driver = webdriver.Chrome('./chromedriver')  # define location of the ChromeDriver (just put it in the same folder as the script)#
 driver = start_session(driver)
 
-###########################
-####  scrape Google maps###
-###########################
+#########################
+####scrape Google maps###
+#########################
 for index, row in inputfile_search.iterrows():
     search_term = row[1]
     search_input = row[0]
 
-    ##### load search input #####
-    # search_inputs = pd.read_csv("/home/cc/PycharmProjects/DigitalMethodsExercises/Infrabel challenge/input_pop_times.csv", sep=",") #import csv file containing a list of places you want to search for
-    # search_inputs = search_inputs.iloc[:,0] #extract the column containing the list of search terms
-
-    #define search input#
+    # define search input#
     driver = search_maps(driver, search_input)
-    driver = search_maps(driver, search_term)
+
+    if search_type == "general":
+        driver = nearby_or_freewheeling(driver,search_input,search_term)
+    else:
+        driver = search_maps(driver, search_term)
 
     # check whether Maps immediately found a specific page#
-    individual_location_page = len(driver.find_elements_by_class_name(
-        "section-hero-header-title-description"))  # check whether Maps already found a specific page by looking for a Google place title
+    individual_location_page = len(driver.find_elements_by_class_name("section-hero-header-title-description"))  # check whether Maps already found a specific page by looking for a Google place title
 
     # if yes, scrape specific page#
     if individual_location_page == 1:
-            output = scrape_specific_page(driver, search_input)
+        output = scrape_specific_page(driver, search_input)
 
     # if not.....#
     # ...1. and the user want to perform a specific search....#
@@ -71,7 +71,7 @@ for index, row in inputfile_search.iterrows():
     if individual_location_page == 0 and search_type == "general":
         check_number_results = len(driver.find_elements_by_class_name("section-result-title"))
         if check_number_results > 0:
-            output = general_search(driver, search_input)
+            output = general_search(driver,search_input)
         if check_number_results == 0:
             output = no_place_found(search_input)
 

@@ -24,48 +24,92 @@ from PopularTimesScraper.scrape_info import scrape_generalinfo
 ##########  SUPPORTIVE FUNCTIONS #############
 ##############################################
 
-def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_datacol,general_data):
-    for i in range(20):
-        global result
-        time.sleep(1)
-        print(i)
-        try:
-            result = driver.find_elements_by_css_selector('h3[class="section-result-title"]')[i]
-        except:
-            break
-        ActionChains(driver).move_to_element(result).perform()  # scroll to element
-        driver.execute_script("arguments[0].click();",result)
-        try:
-            driver.find_element_by_css_selector('div[class="section-hero-header-title-description"]')
-        except NoSuchElementException:
-            previous = driver.find_element_by_xpath("//span[contains(@class,'button-previous-icon')]")
-            driver.execute_script("arguments[0].click();", previous)
-            time.sleep(8)
-            next = driver.find_element_by_xpath("//span[contains(@class,'button-next-icon')]")
-            driver.execute_script("arguments[0].click();", next)
-            time.sleep(8)
-            result = driver.find_elements_by_css_selector('h3[class="section-result-title"]')[i]
-            ActionChains(driver).move_to_element(result).perform()  
-            driver.execute_script("arguments[0].click();",result)
-        populartimesgraph = scrape_pop(driver,search_input)
-        appendedpoptimes = appending_data(populartimesgraph, general_popdatacol,general_popdata)
-        generalinfo = scrape_generalinfo(driver,search_input)
-        appendedgeneralinfo = appending_data(generalinfo,general_datacol,general_data)
-        titlepage = driver.find_element_by_css_selector(('div[class="section-hero-header-title-description"]')).text
-        print(titlepage)
-        backbutton = driver.find_elements_by_xpath("//button[contains(@class,'back-to-list')]")
-        backbutton[0].click()
-        time.sleep(4)
-    return [appendedpoptimes,appendedgeneralinfo]
+######################################
+def retry_page(driver,count):
+    previous = driver.find_element_by_xpath("//span[contains(@class,'button-previous-icon')]")
+    driver.execute_script("arguments[0].click();", previous)
+    time.sleep(8)
+    next = driver.find_element_by_xpath("//span[contains(@class,'button-next-icon')]")
+    driver.execute_script("arguments[0].click();", next)
+    time.sleep(8)
+    result = driver.find_elements_by_css_selector('h3[class="section-result-title"]')[count]
+    ActionChains(driver).move_to_element(result).perform()
+    driver.execute_script("arguments[0].click();", result)
 
 ######################################
-
 def get_geo(driver):
     url = driver.current_url
     geocode = re.search(r'(?<=@)(.*?),(.*?)(?=,)', url)[0]
     latitude = float(geocode.split(',')[0])
     longitude = float(geocode.split(',')[1])
     return latitude, longitude
+
+########################################
+
+def no_appropriate_places(search_input):
+        place_not_found = "page without results"  # and append this message to every list (we'll use these lists to create our general DataFrame later on)
+        name_google = hours_in_day = percentage_list = hour_list = day_list = id = place_not_found
+        dict_poptimes = {'search input': search_input, 'google maps name': name_google, 'id': id,'hours in day': hours_in_day, 'percentage busy': percentage_list, 'hour list': hour_list,'day list': day_list}
+        dict_generalinfo = {'search input': search_input, 'google maps name': place_not_found, 'id': place_not_found,'category': place_not_found,'address': place_not_found, 'score': place_not_found, 'reviews': place_not_found,'expense': place_not_found,'extra info': place_not_found, 'maandag': place_not_found, 'dinsdag': place_not_found,'woensdag': place_not_found,'donderdag': place_not_found, 'vrijdag': place_not_found, 'zaterdag': place_not_found,'zondag': place_not_found}
+        return [dict_poptimes, dict_generalinfo]
+
+###############################################
+
+def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_datacol,general_data,original_geocode):
+    for i in range(20):
+        global result, count, populartimesgraph, generalinfo, appendedpoptimes, appendedgeneralinfo
+        count = i
+        places_toofar = 0
+        time.sleep(1)
+
+        no_places_on_page = len(driver.find_elements_by_css_selector('div[class="section-no-result-title"]'))
+
+        if no_places_on_page == 1:
+            empty_dicts = no_appropriate_places(search_input)
+            populartimesgraph = empty_dicts[0]
+            generalinfo = empty_dicts[1]
+
+        if no_places_on_page == 0:
+            try:
+                result = driver.find_elements_by_css_selector('h3[class="section-result-title"]')[i]
+            except IndexError:
+                break
+            else:
+                ActionChains(driver).move_to_element(result).perform()  # scroll to element
+                driver.execute_script("arguments[0].click();", result)
+
+            try:
+                driver.find_element_by_css_selector('div[class="section-hero-header-title-description"]')
+            except NoSuchElementException:
+                retry_page(driver,count)
+            else:
+                place_geo = get_geo(driver)
+                lat_diff_place = abs(place_geo[0] - original_geocode[0])
+                long_diff_place = abs(place_geo[1] - original_geocode[1])
+
+            if lat_diff_place > 0.1 or long_diff_place > 0.1:
+                backbutton = driver.find_element_by_xpath("//button[contains(@class,'back-to-list')]")
+                driver.execute_script("arguments[0].click();", backbutton)
+                places_toofar = places_toofar + 1
+
+                if places_toofar == 20:
+                    empty_dicts = no_appropriate_places(search_input)
+                    populartimesgraph = empty_dicts[0]
+                    generalinfo = empty_dicts[1]
+
+            populartimesgraph = scrape_pop(driver, search_input)
+            generalinfo = scrape_generalinfo(driver, search_input)
+            print("Scraped place:")
+            print(generalinfo['google maps name'])
+            print("#######################")
+
+        appendedpoptimes = appending_data(populartimesgraph, general_popdatacol,general_popdata)
+        appendedgeneralinfo = appending_data(generalinfo,general_datacol,general_data)
+        backbutton = driver.find_element_by_xpath("//button[contains(@class,'back-to-list')]")
+        driver.execute_script("arguments[0].click();",backbutton)
+        time.sleep(4)
+
+    return [appendedpoptimes,appendedgeneralinfo]
 
 ##################################################
 ##########  GENERAL FUNCTION FOR USE #############
@@ -84,11 +128,11 @@ def general_search(driver,search_input):
         lat_diff = abs(current_geocode[0] - original_geocode[0])
         long_diff = abs(current_geocode[1] - original_geocode[1])
         if lat_diff < 0.2 and long_diff < 0.2:
-            scraperesults = scrapepage(driver,search_input,general_popdata,general_popdatacol,general_datacol,general_data)
+            scraperesults = scrapepage(driver,search_input,general_popdata,general_popdatacol,general_datacol,general_data,original_geocode)
             try:
-                pagenext = driver.find_elements_by_xpath("//span[contains(@class,'button-next-icon')]")
+                pagenext = driver.find_element_by_xpath("//span[contains(@class,'button-next-icon')]")
                 page_available = 1
-                pagenext[0].click()
+                driver.execute_script("arguments[0].click();",pagenext)
                 time.sleep(5)
             except:
                 page_available = 0

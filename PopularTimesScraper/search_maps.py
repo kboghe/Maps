@@ -3,17 +3,44 @@
 ##############################################
 
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
+from bs4 import BeautifulSoup
+import re
 import time
 
 ##########################################
 ##########  SUPPORTIVE FUNCTIONS #########
 ##########################################
 
+###############################################
 def literal_search(driver):
     # force the search to be literal (to avoid ambiguous station names) if Google corrects your search term
     check_correction_link = driver.find_elements_by_css_selector('button[jsaction="pane.correctionSection.originalQueryClick"]')  # find a link referring to your original search term.
     if len(check_correction_link) > 0:  # if you can find that link (i.e. length of element is longere than 0)...
         check_correction_link[0].click()  # ...click on it
+
+#################################################
+def distance_check(driver):
+    scale = driver.find_element_by_css_selector('button[class*= "widget-scale"]')
+    scale_text = BeautifulSoup(scale.get_attribute('innerHTML'), 'lxml')  #load it into Beautifulsoup
+    dist = scale_text.select('label#widget-scale-label')[0].text.split(' ')
+    if dist[1] == "km":
+        dist[1] = "000"
+    else:
+        dist[1] = ""
+    dist = int(dist[0] + dist[1])
+    only_num = re.compile(r'[^\d]')
+    length_bar = int(only_num.sub('',scale_text.div["style"]))
+    return [dist,length_bar]
+
+###################################################
+def zoom_check(dist_original,dist_new):
+    zoom = "ok"
+    if dist_original[0] < dist_new[0]:
+        zoom = "zooming out"
+    if (dist_original[0] == dist_new[0]) and (dist_original[1] > dist_new[1]):
+        zoom = "zooming out"
+    return [zoom]
 
 ##################################################
 ##########  GENERAL FUNCTION FOR USE #############
@@ -33,3 +60,28 @@ def search_maps(driver,search_term):
     literal_search(driver)
     time.sleep(3)
     return driver
+
+def nearby_or_freewheeling(driver,search_input,search_term):
+        #try out the nearby option and see how that changes the range in maps#
+        dist_original = distance_check(driver)
+        time.sleep(2)
+        nearby = driver.find_element_by_css_selector('button[jsaction="pane.placeActions.nearby"]')
+        driver.execute_script("arguments[0].click();",nearby)
+        driver = search_maps(driver, search_term)
+        dist_new = distance_check(driver)
+        zoom = zoom_check(dist_original,dist_new)[0]
+
+        #use the nearby function only if Google doesn't zoom out even further from your place of interest.
+        # Otherwise, perform the search again#
+        if zoom == "ok":
+            try:
+                nopreview = driver.find_element_by_css_selector('input[aria-checked="true"]')
+                driver.execute_script("arguments[0].click();",nopreview)
+            except NoSuchElementException:
+                pass
+
+        if zoom == "zooming out":
+            driver = search_maps(driver, search_input)
+            driver = search_maps(driver, search_term)
+
+        return driver

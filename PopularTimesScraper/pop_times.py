@@ -7,8 +7,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 def scrape_pop(driver,search_input):
 
-    check_popular_times = driver.find_elements_by_class_name("section-popular-times-graph")  # look for the "popular times" element on the page
-    popular_times_available = len(check_popular_times)  # check whether the place is popular enough to have "popular times" enabled.
+    popular_times_available = len(driver.find_elements_by_class_name("section-popular-times-graph"))  # look for the "popular times" element on the page
     percentage_list, hour_list, day_list, station, name_google, hours_in_day,id, url = ([] for i in range(8))
 
     ############
