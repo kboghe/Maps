@@ -10,7 +10,15 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from collections import defaultdict
 
-
+##################################################
+########### SUPPORTIVE FUNCTIONS #################
+##################################################
+def clean_text(text):
+    rgx_list = [r'\(.*?\)',r'Openingstijden.*']
+    new_text = text
+    for rgx_match in rgx_list:
+        new_text = re.sub(rgx_match, '', new_text).strip()
+    return new_text
 
 ##################################################
 ##########  GENERAL FUNCTION FOR USE #############
@@ -76,7 +84,7 @@ def scrape_generalinfo(driver,search_input):
                 else:
                     day_split = day.split(" ", 1)
                 dayname = day_split[0]
-                dict_days[dayname] = day_split[1]
+                dict_days[dayname] = clean_text(day_split[1])
         else:
             dict_days = dict_days_empty
 
