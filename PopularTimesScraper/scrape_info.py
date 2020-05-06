@@ -54,20 +54,34 @@ def scrape_generalinfo(driver,search_input):
         extrainfo = "no extra info available"
 
     dict_days = defaultdict(list)
+    message_empty = "no hours available"
+    dict_days_empty = {'maandag': message_empty, 'dinsdag': message_empty, 'woensdag': message_empty, 'donderdag':message_empty,
+                       'vrijdag': message_empty, 'zaterdag': message_empty, 'zondag': message_empty}
     try:
         openinghours = driver.find_element_by_css_selector('div[class*="section-open-hours"]').get_attribute("aria-label")
     except NoSuchElementException:
-        dict_days['maandag'] = dict_days['dinsdag'] = dict_days['woensdag'] = \
-            dict_days['donderdag'] = dict_days['vrijdag'] = dict_days['zaterdag'] = dict_days['zondag'] = ['no hours available']
+        dict_days = dict_days_empty
     else:
-        openinghours = openinghours.split(",")
-        for day in openinghours:
-            day_split = day.split(" ",1)
-            dayname = day_split[0]
-            dict_days[dayname] = day_split[1]
-    finally:
-        dict_generalinfo = {'url':url,'search input':search_input_list,'google maps name':google_maps_name,'id':id_list,'category':category,
-                         'address':address,'score':score,'reviews':reviews,'expense':expense,'extra info':extrainfo,'maandag':dict_days['maandag'],
-                            'dinsdag':dict_days['dinsdag'],'woensdag':dict_days['woensdag'],'donderdag':dict_days['donderdag'],'vrijdag':dict_days['vrijdag'],
-                            'zaterdag':dict_days['zaterdag'],'zondag':dict_days['zondag']}
+        if str(next(iter(dict_days_empty))) in openinghours:
+            count_semicolon = openinghours.count(";")
+            if count_semicolon == 0:
+                openinghours = openinghours.split(",")
+            elif count_semicolon > 0:
+                openinghours = openinghours.split(";")
+
+            for day in openinghours:
+                count_comma = openinghours[0].count(",")
+                if count_comma > 0:
+                    day_split = day.split(",",1)
+                else:
+                    day_split = day.split(" ", 1)
+                dayname = day_split[0]
+                dict_days[dayname] = day_split[1]
+        else:
+            dict_days = dict_days_empty
+
+    dict_generalinfo = {'url':url,'search input':search_input_list,'google maps name':google_maps_name,'id':id_list,'category':category,
+                        'address':address,'score':score,'reviews':reviews,'expense':expense,'extra info':extrainfo,'maandag':dict_days['maandag'],
+                        'dinsdag':dict_days['dinsdag'],'woensdag':dict_days['woensdag'],'donderdag':dict_days['donderdag'],'vrijdag':dict_days['vrijdag'],
+                        'zaterdag':dict_days['zaterdag'],'zondag':dict_days['zondag']}
     return dict_generalinfo

@@ -4,7 +4,6 @@
 from selenium import webdriver
 import pandas as pd
 import time
-from selenium.common.exceptions import NoSuchElementException
 
 ##############################################
 ##########  IMPORT OWN FUNCTIONS LIBRARIES ###
@@ -27,7 +26,7 @@ general_scraping = "true"
 ####  load search input ###
 ###########################
 inputfile_search = pd.read_csv('inputfile_search.csv', sep=";", encoding='utf-8')
-inputfile_search = inputfile_search.iloc[5:]
+inputfile_search = inputfile_search.iloc[7:]
 
 ######################
 ####  start browser###
@@ -48,6 +47,7 @@ for index, row in inputfile_search.iterrows():
     if search_type == "general":
         driver = nearby_or_freewheeling(driver,search_input,search_term)
     else:
+        time.sleep(3)
         driver = search_maps(driver, search_term)
 
     # check whether Maps immediately found a specific page#
