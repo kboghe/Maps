@@ -83,7 +83,7 @@ def scrape_generalinfo(driver,search_input):
                     day_split = day.split(",",1)
                 else:
                     day_split = day.split(" ", 1)
-                dayname = day_split[0]
+                dayname = day_split[0].strip()
                 dict_days[dayname] = clean_text(day_split[1])
         else:
             dict_days = dict_days_empty

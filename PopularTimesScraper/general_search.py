@@ -57,11 +57,11 @@ def no_appropriate_places(search_input):
 
 def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_datacol,general_data,original_geocode):
     for i in range(20):
-        global result, count, populartimesgraph, generalinfo, appendedpoptimes, appendedgeneralinfo, lat_diff_place, long_diff_place
+        global result, count, populartimesgraph, generalinfo, appendedpoptimes, appendedgeneralinfo
         count = i
         places_toofar = 0
-        time.sleep(4)
-        no_places_on_page = len(driver.find_elements_by_css_selector('div[class="section-no-result-title"]'))
+        time.sleep(5)
+        no_places_on_page = len(driver.find_elements_by_css_selector('div[class=".section-no-result.noprint"]'))
         if no_places_on_page == 1:
             break
         if no_places_on_page == 0:
@@ -76,12 +76,13 @@ def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_da
                 driver.find_element_by_css_selector('div[class="section-hero-header-title-description"]')
             except NoSuchElementException:
                 retry_page(driver,count)
-            else:
+            finally:
+                time.sleep(4)
                 place_geo = get_geo(driver)
                 lat_diff_place = abs(place_geo[0] - original_geocode[0])
                 long_diff_place = abs(place_geo[1] - original_geocode[1])
 
-            if lat_diff_place > 0.1 or long_diff_place > 0.1:
+            if lat_diff_place > 0.2 or long_diff_place > 0.2:
                 print("Searched too far from point of interest. Returning...")
                 backbutton = driver.find_element_by_xpath("//button[contains(@class,'back-to-list')]")
                 driver.execute_script("arguments[0].click();", backbutton)
@@ -104,7 +105,7 @@ def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_da
         appendedgeneralinfo = appending_data(generalinfo,general_datacol,general_data)
         backbutton = driver.find_element_by_xpath("//button[contains(@class,'back-to-list')]")
         driver.execute_script("arguments[0].click();",backbutton)
-        time.sleep(10)
+        time.sleep(6)
 
     return [appendedpoptimes,appendedgeneralinfo]
 
@@ -130,7 +131,7 @@ def general_search(driver,search_input):
                 pagenext = driver.find_element_by_xpath("//span[contains(@class,'button-next-icon')]")
                 page_available = 1
                 driver.execute_script("arguments[0].click();",pagenext)
-                time.sleep(10)
+                time.sleep(6)
                 error_loading_page = len(driver.find_elements_by_css_selector(".div.section-refresh-overlay.noprint.section-refresh-overlay-visible"))
                 if error_loading_page > 0:
                     print("Sorry, Google refuses to load the next page...\nSaving the info I can and moving on.")
