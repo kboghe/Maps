@@ -55,14 +55,20 @@ def start_session(driver):
     return driver
 
 def search_maps(driver,search_term):
-    search_bar = driver.find_element_by_name("q") #find the search bar
-    search_bar.clear() #clear it (i.e. delete whatever's typed into it)
-    for letter in search_term: #create a delay in sending the keys to avoid
-        time.sleep(0.3)
-        search_bar.send_keys(letter)
-    search_bar.send_keys(Keys.RETURN)  #...and press enter
-    literal_search(driver)
-    time.sleep(3)
+    while True:
+        search_bar = driver.find_element_by_name("q") #find the search bar
+        search_bar.clear() #clear it (i.e. delete whatever's typed into it)
+        for letter in search_term: #create a delay in sending the keys to avoid
+            time.sleep(0.3)
+            search_bar.send_keys(letter)
+        search_bar.send_keys(Keys.RETURN)  #...and press enter
+        input_new = driver.find_element_by_tag_name('title').get_attribute('innerHTML').split('-')[0].strip()
+        if input_new == search_term:
+            time.sleep(5)
+            literal_search(driver)
+            break
+        else:
+            continue
     return driver
 
 def nearby_or_freewheeling(driver,search_input,search_term):

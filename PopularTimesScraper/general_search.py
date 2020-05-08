@@ -61,8 +61,11 @@ def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_da
         count = i
         places_toofar = 0
         time.sleep(5)
-        no_places_on_page = len(driver.find_elements_by_css_selector('div[class=".section-no-result.noprint"]'))
+        no_places_on_page = len(driver.find_elements_by_css_selector('div[class="section-bad-query-title"]'))
         if no_places_on_page == 1:
+            empty_dicts = no_appropriate_places(search_input)
+            populartimesgraph = empty_dicts[0]
+            generalinfo = empty_dicts[1]
             break
         if no_places_on_page == 0:
             try:
@@ -136,6 +139,10 @@ def general_search(driver,search_input):
                 if error_loading_page > 0:
                     print("Sorry, Google refuses to load the next page...\nSaving the info I can and moving on.")
                     page_available = 0
+                else:
+                    empty_page = len(driver.find_elements_by_css_selector('div[class="section-no-result-title"]'))
+                    if empty_page == 1:
+                        page_available = 0
             except:
                 page_available = 0
                 break

@@ -4,6 +4,7 @@ from subprocess import check_output
 import time
 
 def StatuscheckVPN():
+    print("\n\n##########################\n")
     print('\033[4m' + "Let's get this VPN party started.\n" + '\033[0m')
     nord_output = subprocess.Popen(["nordvpn", "status"], stdout=subprocess.PIPE)
     status = re.split('[\r \n :]', nord_output.communicate()[0].decode("utf-8"))[-2]
