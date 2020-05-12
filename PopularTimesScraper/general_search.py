@@ -39,7 +39,7 @@ def retry_page(driver,count):
 ######################################
 def get_geo(driver):
     url = driver.current_url
-    geocode = re.search(r'(?<=@)(.*?),(.*?)(?=,)', url)[0]
+    geocode = re.search(r'(?<=/@)(.*?),(.*?)(?=,)', url)[0]
     latitude = float(geocode.split(',')[0])
     longitude = float(geocode.split(',')[1])
     return latitude, longitude
@@ -108,7 +108,7 @@ def scrapepage(driver,search_input,general_popdata,general_popdatacol,general_da
         appendedgeneralinfo = appending_data(generalinfo,general_datacol,general_data)
         backbutton = driver.find_element_by_xpath("//button[contains(@class,'back-to-list')]")
         driver.execute_script("arguments[0].click();",backbutton)
-        time.sleep(6)
+        time.sleep(10)
 
     return [appendedpoptimes,appendedgeneralinfo]
 

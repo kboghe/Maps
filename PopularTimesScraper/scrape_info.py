@@ -9,6 +9,7 @@ from collections import OrderedDict
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from collections import defaultdict
+import time
 
 ##################################################
 ########### SUPPORTIVE FUNCTIONS #################
@@ -57,9 +58,36 @@ def scrape_generalinfo(driver,search_input):
     except NoSuchElementException:
         category = "no category available"
     try:
-        extrainfo = driver.find_element_by_css_selector('div[class*="editorial-attributes-summary"]').text
+        extracontainer = driver.find_element_by_css_selector('div[class*="section-editorial-attributes-summary"]')
     except NoSuchElementException:
         extrainfo = "no extra info available"
+    else:
+        driver.execute_script("arguments[0].click();", extracontainer)
+        time.sleep(4)
+
+        extrainfotables = driver.find_elements_by_css_selector('div[class="section-attribute-group GLOBAL__gm2-body-2"]')
+        extrainfo = list()
+        for table in extrainfotables:
+            table_soup = BeautifulSoup(table.get_attribute('innerHTML'),'lxml')
+            title_info = table_soup.select('div[class*="group-title"]')[0].text.strip()
+            title_content = table_soup.select('div[class*="group-item"]')
+
+            contentlist = list()
+            for i in range(len(title_content)):
+                content = title_content[i].text.strip()
+                contentlist.append(content)
+            contentlist = '#'.join(contentlist).replace("##","#")
+
+            info_single_table = title_info + " *** " + contentlist
+            print(info_single_table)
+            extrainfo.append(info_single_table)
+            print("##########")
+        extrainfo = ' --- '.join(extrainfo)
+
+        time.sleep(2)
+        backbutton = driver.find_element_by_css_selector('button[class*="section-header-back-button"]')
+        driver.execute_script("arguments[0].click();", backbutton)
+        time.sleep(6)
 
     dict_days = defaultdict(list)
     message_empty = "no hours available"

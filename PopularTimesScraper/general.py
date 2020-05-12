@@ -48,7 +48,7 @@ geo = StatuscheckVPN()
 ####  load search input ###
 ###########################
 inputfile_search = pd.read_csv('./inputfile_search.csv', sep=";", encoding='utf-8')
-inputfile_search = inputfile_search.iloc[10:]
+inputfile_search = inputfile_search.iloc[32:]
 
 #########################
 ####scrape Google maps###
