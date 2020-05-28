@@ -87,7 +87,7 @@ def scrape_generalinfo(driver,search_input):
         time.sleep(2)
         backbutton = driver.find_element_by_css_selector('button[class*="section-header-back-button"]')
         driver.execute_script("arguments[0].click();", backbutton)
-        time.sleep(6)
+        time.sleep(4)
 
     dict_days = defaultdict(list)
     message_empty = "no hours available"
