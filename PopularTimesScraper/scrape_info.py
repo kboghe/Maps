@@ -36,7 +36,7 @@ def scrape_generalinfo(driver,search_input):
     except NoSuchElementException:
         id_list = "no id available"
     try:
-        image_adr = driver.find_element_by_css_selector('img[src*="place_gm_blue"]').find_element_by_xpath('../..')
+        image_adr = driver.find_element_by_css_selector('img[src*="place_gm_blue"]').find_element_by_xpath('../../following::div')
         address = list(filter(None,(re.split('   ',BeautifulSoup(image_adr.get_attribute('innerHTML'), 'lxml').text))))[0].strip()
     except NoSuchElementException:
         address = "no address available"

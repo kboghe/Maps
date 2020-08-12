@@ -56,7 +56,6 @@ def scrape_pop(driver,search_input):
         if popular_times_available > 0:
             day_of_week = day_of_week.text
             index_day = day_list_pick.index(day_of_week)
-            print("GETTING HERE")
 
             ##############
             # access table#
